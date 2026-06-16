@@ -1,0 +1,754 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>마리아나 해구 — 지구의 심연</title>
+  <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@300;400;600&family=Raleway:ital,wght@0,200;0,300;0,400;1,200;1,300&family=Source+Code+Pro:wght@300;400&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="style.css" />
+  <!-- Three.js importmap (fish.js 모듈용) -->
+  <script type="importmap">
+    {
+      "imports": {
+        "three": "https://unpkg.com/three@0.160.0/build/three.module.js",
+        "three/addons/": "https://unpkg.com/three@0.160.0/examples/jsm/"
+      }
+    }
+  </script>
+</head>
+<body>
+
+  <!-- 커스텀 커서 -->
+  <div class="cursor" id="cursor"></div>
+  <div class="cursor-ring" id="cursorRing"></div>
+
+  <!-- 배경 파티클 -->
+  <canvas id="particles"></canvas>
+
+  <!-- 버블 컨테이너 -->
+  <div class="bubbles-container" id="bubbles"></div>
+
+  <!-- ======================== NAV ======================== -->
+  <nav id="mainNav">
+    <div class="nav-logo">마리아나</div>
+    <ul class="nav-links">
+      <li><a href="#depth">수심층</a></li>
+      <li><a href="#features">특성</a></li>
+      <li><a href="#creatures">생물</a></li>
+      <li><a href="#terrain3d">지형</a></li>
+      <li><a href="#compare">비교</a></li>
+      <li><a href="#vessels">탐사선</a></li>
+      <li><a href="#timeline">탐험사</a></li>
+    </ul>
+    <div class="nav-depth">
+      수심 <span id="depthCounter">0</span>m
+    </div>
+  </nav>
+
+  <!-- ======================== HERO ======================== -->
+  <section class="hero" id="hero">
+    <div class="hero-bg"></div>
+    <div class="hero-bg-overlay"></div>
+    <canvas id="hero-bubble-canvas"></canvas>
+    <div class="hero-fog"></div>
+    <div class="hero-fog-left"></div>
+    <div class="hero-fog-right"></div>
+
+    <div class="hero-content">
+      <div class="hero-eyebrow">Pacific Ocean · 11°22′N 142°35′E</div>
+      <h1 class="hero-title">MARIANA<br/><span class="accent">TRENCH</span></h1>
+      <p class="hero-subtitle">지구 표면의 가장 깊은 곳 · 11,034m</p>
+      <div class="hero-stats">
+        <div class="stat-item">
+          <span class="stat-num">11,034</span>
+          <span class="stat-label">최대 수심 (m)</span>
+        </div>
+        <div class="stat-divider"></div>
+        <div class="stat-item">
+          <span class="stat-num">2,550</span>
+          <span class="stat-label">총 길이 (km)</span>
+        </div>
+        <div class="stat-divider"></div>
+        <div class="stat-item">
+          <span class="stat-num">1,086</span>
+          <span class="stat-label">수압 (atm)</span>
+        </div>
+      </div>
+      <div class="hero-btns">
+        <a href="#depth" class="hero-cta">
+          <span>심층 탐사 시작</span>
+          <span class="cta-arrow">↓</span>
+        </a>
+        <a href="abis/index.html" class="hero-cta hero-cta-expedition">
+          <span>심해 탐험 시작</span>
+          <span class="cta-arrow">→</span>
+        </a>
+      </div>
+    </div>
+
+    <div class="scroll-indicator">
+      <div class="scroll-line"></div>
+      <div class="scroll-text">SCROLL</div>
+    </div>
+  </section>
+
+  <!-- ======================== DEPTH LAYERS (인터랙티브) ======================== -->
+  <div class="section-divider"></div>
+  <section class="depth-section" id="depth">
+    <div class="depth-visual">
+      <div class="depth-bar-container">
+        <div class="depth-bar-fill" id="depthBar"></div>
+        <!-- 클릭 가능한 마커 -->
+        <div class="depth-markers">
+          <div class="depth-marker" data-layer="0" style="top:2%">
+            <div class="marker-dot active"></div>
+            <span class="marker-label">0m</span>
+          </div>
+          <div class="depth-marker" data-layer="1" style="top:16%">
+            <div class="marker-dot"></div>
+            <span class="marker-label">200m</span>
+          </div>
+          <div class="depth-marker" data-layer="2" style="top:32%">
+            <div class="marker-dot"></div>
+            <span class="marker-label">1,000m</span>
+          </div>
+          <div class="depth-marker" data-layer="3" style="top:52%">
+            <div class="marker-dot"></div>
+            <span class="marker-label">4,000m</span>
+          </div>
+          <div class="depth-marker" data-layer="4" style="top:70%">
+            <div class="marker-dot"></div>
+            <span class="marker-label">6,000m</span>
+          </div>
+          <div class="depth-marker" data-layer="5" style="top:84%">
+            <div class="marker-dot"></div>
+            <span class="marker-label">8,000m</span>
+          </div>
+          <div class="depth-marker" data-layer="6" style="top:97%">
+            <div class="marker-dot"></div>
+            <span class="marker-label">11,034m</span>
+          </div>
+        </div>
+      </div>
+      <div class="depth-bar-labels">
+        <div class="bar-label-top">해수면</div>
+        <div class="bar-label-bot">챌린저 딥</div>
+      </div>
+    </div>
+
+    <!-- 층 선택 버튼 목록 -->
+    <div class="depth-layer-list">
+      <div class="dl-btn active" data-layer="0">
+        <div class="dl-btn-range">0 – 200m</div>
+        <div class="dl-btn-name">투광층 <span>Epipelagic Zone</span></div>
+        <div class="dl-btn-arrow">→</div>
+      </div>
+      <div class="dl-btn" data-layer="1">
+        <div class="dl-btn-range">200 – 1,000m</div>
+        <div class="dl-btn-name">박광층 <span>Mesopelagic Zone</span></div>
+        <div class="dl-btn-arrow">→</div>
+      </div>
+      <div class="dl-btn" data-layer="2">
+        <div class="dl-btn-range">1,000 – 4,000m</div>
+        <div class="dl-btn-name">무광층 <span>Bathypelagic Zone</span></div>
+        <div class="dl-btn-arrow">→</div>
+      </div>
+      <div class="dl-btn" data-layer="3">
+        <div class="dl-btn-range">4,000 – 6,000m</div>
+        <div class="dl-btn-name">심해저층 <span>Abyssopelagic Zone</span></div>
+        <div class="dl-btn-arrow">→</div>
+      </div>
+      <div class="dl-btn" data-layer="4">
+        <div class="dl-btn-range">6,000 – 8,000m</div>
+        <div class="dl-btn-name">초심해층 <span>Hadopelagic Zone</span></div>
+        <div class="dl-btn-arrow">→</div>
+      </div>
+      <div class="dl-btn" data-layer="5">
+        <div class="dl-btn-range">8,000 – 11,000m</div>
+        <div class="dl-btn-name">해구 심부 <span>Trench Zone</span></div>
+        <div class="dl-btn-arrow">→</div>
+      </div>
+      <div class="dl-btn" data-layer="6">
+        <div class="dl-btn-range">11,034m</div>
+        <div class="dl-btn-name">챌린저 딥 <span>Challenger Deep</span></div>
+        <div class="dl-btn-arrow">→</div>
+      </div>
+    </div>
+
+    <!-- 상세 카드 패널 (JS로 채워짐) -->
+    <div class="depth-detail-panel" id="depthDetailPanel"></div>
+  </section>
+
+  <!-- ======================== FEATURES ======================== -->
+  <div class="section-divider"></div>
+  <section class="features-section reveal" id="features">
+    <div class="features-header">
+      <div>
+        <div class="section-tag">환경적 특성 · Environmental Characteristics</div>
+        <h2 class="section-title">극한 환경의<br/>6가지 면모</h2>
+      </div>
+    </div>
+    <div class="features-grid">
+      <div class="feature-card">
+        <span class="feature-icon">🌡️</span>
+        <div class="feature-num">01 / 06</div>
+        <h3 class="feature-title">극저온 환경</h3>
+        <p class="feature-desc">수심 1,000m 이하 구간의 수온은 연중 1–4°C로 안정됩니다. 태양복사에너지가 완전히 차단되며, 열수공(hydrothermal vent) 인근만 예외적으로 고온 환경이 형성됩니다.</p>
+        <div class="feature-more">자세히 알아보기 →</div>
+      </div>
+      <div class="feature-card">
+        <span class="feature-icon">⚡</span>
+        <div class="feature-num">02 / 06</div>
+        <h3 class="feature-title">극한 정수압</h3>
+        <p class="feature-desc">챌린저 딥 저면의 정수압(hydrostatic pressure)은 약 1,086기압(109.6 MPa)에 달합니다. 수심 10m 증가 시 약 1atm씩 상승하며, 지표면 대기압의 1,000배를 초과합니다.</p>
+        <div class="feature-more">자세히 알아보기 →</div>
+      </div>
+      <div class="feature-card">
+        <span class="feature-icon">🌑</span>
+        <div class="feature-num">03 / 06</div>
+        <h3 class="feature-title">광무층 · 완전 암흑</h3>
+        <p class="feature-desc">수심 200m 이하부터 광합성 가능 조도가 소멸하며, 1,000m 이하(무광층·aphotic zone)에서는 가시광선이 완전히 차단됩니다. 생물들은 생물발광(bioluminescence)으로 에너지를 운용합니다.</p>
+        <div class="feature-more">자세히 알아보기 →</div>
+      </div>
+      <div class="feature-card">
+        <span class="feature-icon">💧</span>
+        <div class="feature-num">04 / 06</div>
+        <h3 class="feature-title">고압 해수의 물성 변화</h3>
+        <p class="feature-desc">극한 압력 조건에서 해수는 약 5% 압축되어 밀도·점성·음속 특성이 변화합니다. 이로 인해 표층 해수와 전혀 다른 열역학적 상태를 보이며, '심층수(deep water)'로 별도 분류됩니다.</p>
+        <div class="feature-more">자세히 알아보기 →</div>
+      </div>
+      <div class="feature-card">
+        <span class="feature-icon">🪨</span>
+        <div class="feature-num">05 / 06</div>
+        <h3 class="feature-title">수렴형 판 경계 · 섭입대</h3>
+        <p class="feature-desc">태평양판(Pacific Plate)이 마리아나판(Mariana Plate) 하부로 섭입(subduction)되는 수렴형 경계에 형성됩니다. 섭입 속도는 연 2–3cm이며, 규모 8.0 이상의 심발지진이 주기적으로 발생합니다.</p>
+        <div class="feature-more">자세히 알아보기 →</div>
+      </div>
+      <div class="feature-card">
+        <span class="feature-icon">🧬</span>
+        <div class="feature-num">06 / 06</div>
+        <h3 class="feature-title">초심해 생태계</h3>
+        <p class="feature-desc">무산소·극압·극저온 조건에서도 200종 이상의 생물이 확인되었습니다. 화학합성(chemosynthesis) 기반의 독립 먹이사슬이 구성되며, 극한 환경 적응 기작(extremophile adaptation)이 연구 중입니다.</p>
+        <div class="feature-more">자세히 알아보기 →</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ======================== GEOLOGY ======================== -->
+  <div class="section-divider"></div>
+  <section class="geology-section reveal" id="geology">
+    <div class="section-tag">지질학적 형성 · Tectonic Origin</div>
+    <h2 class="section-title">어떻게 만들어졌나</h2>
+    <div class="geology-grid">
+      <div class="geo-visual">
+        <svg class="trench-cross-section" viewBox="0 0 500 400" xmlns="http://www.w3.org/2000/svg">
+          <defs>
+            <linearGradient id="ocean" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0%"   stop-color="#00d4ff" stop-opacity="0.15"/>
+              <stop offset="100%" stop-color="#000a14" stop-opacity="0.9"/>
+            </linearGradient>
+            <linearGradient id="crust1" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0%"   stop-color="#1a4a6a"/>
+              <stop offset="100%" stop-color="#0a2030"/>
+            </linearGradient>
+            <linearGradient id="crust2" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0%"   stop-color="#0d3348"/>
+              <stop offset="100%" stop-color="#061520"/>
+            </linearGradient>
+            <filter id="glow2">
+              <feGaussianBlur stdDeviation="3" result="b"/>
+              <feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge>
+            </filter>
+            <marker id="arr" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto">
+              <path d="M0,0 L6,3 L0,6" fill="none" stroke="#00d4ff" stroke-width="1"/>
+            </marker>
+          </defs>
+          <rect width="500" height="220" fill="url(#ocean)"/>
+          <polygon points="0,200 200,200 280,320 260,400 0,400"     fill="url(#crust1)"/>
+          <polygon points="200,200 500,180 500,400 260,400 280,320" fill="url(#crust2)"/>
+          <polyline points="0,200 200,200 260,340 320,200 500,180"  fill="none" stroke="#00d4ff" stroke-width="2" opacity="0.7"/>
+          <polygon points="200,200 260,340 320,200" fill="url(#ocean)" opacity="0.5"/>
+          <path d="M100,240 Q180,280 240,310" stroke="#00d4ff" stroke-width="1.5" fill="none" stroke-dasharray="6,4" opacity="0.6" marker-end="url(#arr)"/>
+          <text x="80"  y="185" font-family="Source Code Pro" font-size="10" fill="#00d4ff" opacity="0.7" letter-spacing="1">태평양판</text>
+          <text x="370" y="165" font-family="Source Code Pro" font-size="10" fill="#00d4ff" opacity="0.7" letter-spacing="1">마리아나판</text>
+          <text x="225" y="290" font-family="Source Code Pro" font-size="9"  fill="#7fffd4" opacity="0.9" letter-spacing="1">해구</text>
+          <line x1="260" y1="200" x2="260" y2="338" stroke="#fff" stroke-width="0.5" stroke-dasharray="4,4" opacity="0.3"/>
+          <text x="268" y="270" font-family="Source Code Pro" font-size="8" fill="#fff" opacity="0.4">11km+</text>
+          <path d="M0,30 Q60,20 120,30 Q180,40 240,30 Q300,20 360,30 Q420,40 500,30"  stroke="#00d4ff" stroke-width="1"   fill="none" opacity="0.2"/>
+          <path d="M0,45 Q60,35 120,45 Q180,55 240,45 Q300,35 360,45 Q420,55 500,45"  stroke="#00d4ff" stroke-width="0.5" fill="none" opacity="0.1"/>
+          <circle cx="260" cy="338" r="8"  fill="#00d4ff" filter="url(#glow2)" opacity="0.6"/>
+          <circle cx="260" cy="338" r="20" fill="none"    stroke="#00d4ff" stroke-width="0.5" opacity="0.3"/>
+        </svg>
+      </div>
+      <div class="geo-facts">
+        <div class="geo-fact-item">
+          <div class="geo-tag">형성 원인 · Tectonic Cause</div>
+          <h4>수렴형 판 경계 · 섭입대</h4>
+          <p>약 1억 8천만 년 전 형성된 태평양판이 밀도 차이에 의해 마리아나판 하부로 섭입됩니다. 오래된 해양 지각은 냉각되어 밀도가 증가하며, 이 음부력(negative buoyancy)이 섭입의 주동력입니다.</p>
+        </div>
+        <div class="geo-fact-item">
+          <div class="geo-tag">위치 · Coordinates</div>
+          <h4>북위 11°22′, 동경 142°35′</h4>
+          <p>괌(Guam) 동측 약 320km, 마리아나 제도 동쪽에 위치합니다. 해구 전체 연장 약 2,550km, 평균 폭 69km, 초승달형 평면 형태입니다.</p>
+        </div>
+        <div class="geo-fact-item">
+          <div class="geo-tag">지진 활동 · Seismic Activity</div>
+          <h4>심발지진 · 메가스러스트</h4>
+          <p>섭입 과정에서 판 간 응력이 축적되어 주기적으로 규모 8.0 이상의 메가스러스트 지진(megathrust earthquake)이 발생합니다.</p>
+        </div>
+        <div class="geo-fact-item">
+          <div class="geo-tag">열수 활동 · Hydrothermal</div>
+          <h4>열수공 · 호상열도</h4>
+          <p>섭입된 해양 지각의 탈수 반응으로 생성된 유체가 분출되며 열수공을 형성합니다. 마리아나 호상열도는 이 마그마 활동의 지표 표현입니다.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ======================== CREATURES + FISH ======================== -->
+  <div class="section-divider"></div>
+  <section class="creatures-section reveal" id="creatures">
+    <div class="creatures-top">
+      <div>
+        <div class="section-tag">초심해 생물상 · Hadal Fauna</div>
+        <h2 class="section-title">극한 환경의<br/>생존자들</h2>
+      </div>
+    </div>
+    <div class="creatures-scroll">
+      <div class="creature-card">
+        <span class="creature-emoji">🦐</span>
+        <div class="creature-name">심해 등각류</div>
+        <div class="creature-latin">Hirondellea gigas</div>
+        <p class="creature-desc">심해 거대증(deep-sea gigantism)의 전형적 사례. 고압 환경에서 세포막 지질 불포화도를 높여 유동성을 유지하며, 유기 퇴적물을 분해하는 청소부 역할을 합니다.</p>
+        <div class="creature-depth-badge">▼ 10,000m 이하 서식</div>
+      </div>
+      <div class="creature-card">
+        <span class="creature-emoji">🐟</span>
+        <div class="creature-name">마리아나 달팽이고기</div>
+        <div class="creature-latin">Pseudoliparis swirei</div>
+        <p class="creature-desc">2014년 챌린저 딥에서 최초 채집. 반투명 체색과 비대화된 측선계를 가지며, 수압 적응을 위해 부레가 완전히 퇴화되었습니다. 척추동물 서식 최대 수심 기록 보유종입니다.</p>
+        <div class="creature-depth-badge">▼ 8,143m 채집 기록</div>
+      </div>
+      <div class="creature-card">
+        <span class="creature-emoji">🦠</span>
+        <div class="creature-name">크세노피오포어</div>
+        <div class="creature-latin">Xenophyophore sp.</div>
+        <p class="creature-desc">단세포 원생생물임에도 최대 20cm 크기에 달하는 지구 최대 단세포 생물군. 퇴적물 중 중금속을 농축하는 특이 생화학을 가지며, 소형 무척추동물의 서식처로 기능합니다.</p>
+        <div class="creature-depth-badge">▼ 6,000–10,000m 분포</div>
+      </div>
+      <div class="creature-card">
+        <span class="creature-emoji">🪼</span>
+        <div class="creature-name">심해 수모해파리</div>
+        <div class="creature-latin">Crossota norvegica</div>
+        <p class="creature-desc">촉수의 생물발광 단백질(GFP 유사체)로 먹이를 유인하는 포식성 자포동물. 극압 조건에서도 젤라틴질 체조직의 탄성을 유지하는 고압 단백질 구조가 확인됩니다.</p>
+        <div class="creature-depth-badge">▼ 3,000–7,000m 분포</div>
+      </div>
+    </div><!-- /creatures-scroll -->
+  </section><!-- /creatures-section -->
+
+  <!-- ======================== 3D 해저지형 ======================== -->
+  <div class="section-divider"></div>
+  <section class="terrain3d-section reveal" id="terrain3d">
+    <div class="terrain3d-header">
+      <div class="section-tag">3D 해저지형 시각화 · Bathymetric Visualization</div>
+      <h2 class="section-title">마리아나 해구<br/>지형 탐사</h2>
+      <p class="terrain3d-desc">
+        Perlin Noise 기반으로 생성한 해저지형입니다. 드래그로 회전, 스크롤로 줌 조절,
+        버튼으로 챌린저 딥까지 하강할 수 있습니다.
+      </p>
+    </div>
+
+    <!-- 컨트롤 버튼 -->
+    <div class="terrain3d-controls">
+      <button id="terrain-dive-btn"  class="t3d-btn t3d-btn-primary">챌린저 딥 하강</button>
+      <button id="terrain-wire-btn"  class="t3d-btn">와이어 ON</button>
+      <button id="terrain-reset-btn" class="t3d-btn">뷰 리셋</button>
+      <div class="t3d-hint">🖱 드래그: 회전 &nbsp;|&nbsp; 스크롤: 줌</div>
+    </div>
+
+    <!-- Three.js 렌더 타겟 -->
+    <div id="terrain3d-canvas"></div>
+
+    <!-- 범례 -->
+    <div class="terrain3d-legend">
+      <div class="legend-item"><span class="legend-dot" style="background:#00d4ff"></span>얕은 해저</div>
+      <div class="legend-item"><span class="legend-dot" style="background:#003366"></span>심해저</div>
+      <div class="legend-item"><span class="legend-dot" style="background:#00ffd0"></span>챌린저 딥</div>
+    </div>
+  </section>
+
+  <!-- ======================== DATA ======================== -->
+  <div class="section-divider"></div>
+  <section class="data-section reveal" id="data">
+    <div class="section-tag">측정 데이터 · Measurement Data</div>
+    <h2 class="section-title">숫자로 보는<br/>마리아나 해구</h2>
+    <div class="data-grid">
+      <div class="data-card">
+        <div class="data-value" data-target="11034">0</div>
+        <div class="data-unit">미터 (m)</div>
+        <div class="data-label">최대 수심</div>
+        <div class="data-sublabel">챌린저 딥 기준<br/>에베레스트(8,849m)보다 2,185m 더 깊음</div>
+      </div>
+      <div class="data-card">
+        <div class="data-value" data-target="1086">0</div>
+        <div class="data-unit">기압 (atm)</div>
+        <div class="data-label">해저 수압</div>
+        <div class="data-sublabel">1cm²당 약 1.1톤<br/>지표면의 1,000배 이상 · ≈ 109.6 MPa</div>
+      </div>
+      <div class="data-card">
+        <div class="data-value" data-target="2550">0</div>
+        <div class="data-unit">킬로미터 (km)</div>
+        <div class="data-label">해구 전체 길이</div>
+        <div class="data-sublabel">초승달형 평면 구조<br/>평균 폭 약 69km</div>
+      </div>
+      <div class="data-card">
+        <div class="data-value">2°C</div>
+        <div class="data-unit">섭씨 (°C)</div>
+        <div class="data-label">평균 수온</div>
+        <div class="data-sublabel">연중 1–4°C 유지<br/>열수공 주변 예외적 고온</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ======================== 에베레스트 비교 시각화 ======================== -->
+  <div class="section-divider"></div>
+  <section class="compare-section reveal" id="compare">
+    <div class="compare-header">
+      <div class="section-tag">깊이 비교 · Depth Comparison</div>
+      <h2 class="section-title">얼마나 깊은가</h2>
+      <p class="compare-subtitle">스크롤로 섹션에 진입하면 애니메이션이 시작됩니다</p>
+    </div>
+    <div class="compare-canvas-wrap">
+      <canvas id="compare-canvas"></canvas>
+    </div>
+  </section>
+
+  <!-- ======================== 탐사선 플립 카드 ======================== -->
+  <div class="section-divider"></div>
+  <section class="vessels-section reveal" id="vessels">
+    <div class="vessels-header">
+      <div class="section-tag">심해 탐사선 · Deep Sea Vessels</div>
+      <h2 class="section-title">챌린저 딥을<br/>정복한 탐사선들</h2>
+      <p class="vessels-subtitle">카드를 클릭해 상세 정보를 확인하세요</p>
+    </div>
+    <div class="vessels-grid">
+
+      <div class="vessel-card" data-id="0">
+        <div class="vessel-inner">
+          <div class="vessel-front">
+            <div class="vessel-year">1960</div>
+            <div class="vessel-emoji">🚢</div>
+            <div class="vessel-name">바티스카프 트리에스테</div>
+            <div class="vessel-name-en">Bathyscaphe Trieste</div>
+            <div class="vessel-depth-badge">10,916m</div>
+            <div class="vessel-flip-hint">클릭하여 상세보기 →</div>
+          </div>
+          <div class="vessel-back">
+            <div class="vessel-back-title">Bathyscaphe Trieste</div>
+            <div class="vessel-back-depth">10,916m</div>
+            <ul class="vessel-specs">
+              <li><span>임무</span>최초 유인 잠항</li>
+              <li><span>승선</span>자크 피카르 · 돈 월시</li>
+              <li><span>잠항 시간</span>약 4시간 48분</li>
+              <li><span>선체</span>강철 구형 내압선체</li>
+              <li><span>부력</span>가솔린 탱크 부력 방식</li>
+              <li><span>특이사항</span>저면에서 넙치 목격, 극심해 생명 최초 확인</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+
+      <div class="vessel-card" data-id="1">
+        <div class="vessel-inner">
+          <div class="vessel-front">
+            <div class="vessel-year">1995</div>
+            <div class="vessel-emoji">🤖</div>
+            <div class="vessel-name">카이코</div>
+            <div class="vessel-name-en">ROV Kaiko · JAMSTEC</div>
+            <div class="vessel-depth-badge">10,911m</div>
+            <div class="vessel-flip-hint">클릭하여 상세보기 →</div>
+          </div>
+          <div class="vessel-back">
+            <div class="vessel-back-title">ROV Kaiko</div>
+            <div class="vessel-back-depth">10,911m</div>
+            <ul class="vessel-specs">
+              <li><span>임무</span>최초 ROV 심저면 시료 채취</li>
+              <li><span>운용</span>JAMSTEC (일본 해양과학기술센터)</li>
+              <li><span>형태</span>원격조종 무인잠수정 (ROV)</li>
+              <li><span>특이사항</span>퇴적물 코어 채취, 신종 미생물 다수 발견</li>
+              <li><span>결말</span>2003년 태풍으로 유실</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+
+      <div class="vessel-card" data-id="2">
+        <div class="vessel-inner">
+          <div class="vessel-front">
+            <div class="vessel-year">2012</div>
+            <div class="vessel-emoji">🎬</div>
+            <div class="vessel-name">딥씨 챌린저</div>
+            <div class="vessel-name-en">Deepsea Challenger</div>
+            <div class="vessel-depth-badge">10,898m</div>
+            <div class="vessel-flip-hint">클릭하여 상세보기 →</div>
+          </div>
+          <div class="vessel-back">
+            <div class="vessel-back-title">Deepsea Challenger</div>
+            <div class="vessel-back-depth">10,898m</div>
+            <ul class="vessel-specs">
+              <li><span>임무</span>단독 유인 잠항, 3D 영상 촬영</li>
+              <li><span>승선</span>제임스 카메론 (단독)</li>
+              <li><span>형태</span>수직 어뢰형 (9.1m)</li>
+              <li><span>장비</span>3D 카메라 · 6종 과학 계측기</li>
+              <li><span>잠항</span>약 2시간 37분 체류</li>
+              <li><span>특이사항</span>최초 고화질 심저면 3D 영상 취득</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+
+      <div class="vessel-card" data-id="3">
+        <div class="vessel-inner">
+          <div class="vessel-front">
+            <div class="vessel-year">2019</div>
+            <div class="vessel-emoji">🏆</div>
+            <div class="vessel-name">리미팅 팩터</div>
+            <div class="vessel-name-en">DSV Limiting Factor</div>
+            <div class="vessel-depth-badge">10,928m</div>
+            <div class="vessel-flip-hint">클릭하여 상세보기 →</div>
+          </div>
+          <div class="vessel-back">
+            <div class="vessel-back-title">DSV Limiting Factor</div>
+            <div class="vessel-back-depth">10,928m ★현행 기록</div>
+            <ul class="vessel-specs">
+              <li><span>임무</span>파이브 딥스 탐사 · 최심 기록 갱신</li>
+              <li><span>승선</span>빅터 베스코보</li>
+              <li><span>선체</span>티타늄 구형 내압선체 90mm</li>
+              <li><span>특이사항</span>신종 갑각류 4종 채집</li>
+              <li><span>오염</span>저면에서 마이크로플라스틱 최초 확인</li>
+              <li><span>현재</span>현행 유인 잠항 최심 기록 보유</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </section>
+
+  <!-- ======================== TIMELINE ======================== -->
+  <div class="section-divider"></div>
+  <section class="timeline-section reveal" id="timeline">
+    <div class="tl-header">
+      <div class="section-tag">탐사 연표 · Exploration History</div>
+      <h2 class="section-title">인류의<br/>심연 탐사사</h2>
+    </div>
+
+    <div class="tl-body">
+
+      <!-- 2열 지그재그 타임라인 -->
+      <div class="tl-grid">
+
+        <!-- 중앙 수직선 -->
+        <div class="tl-center-line">
+          <div class="tl-line-fill" id="tlLineFill"></div>
+        </div>
+
+        <!-- 1875 — 왼쪽 -->
+        <div class="tl-item tl-left" data-depth="8184">
+          <div class="tl-content">
+            <div class="tl-year">1875</div>
+            <div class="tl-event">HMS 챌린저호 — 최초 음측 발견</div>
+            <p class="tl-desc">영국 왕립학회 소속 해양조사선 HMS 챌린저호가 피아노 와이어 음측법으로 수심 8,184m를 기록하며 마리아나 해구를 최초로 발견. 현대 해양학의 기점으로 평가됩니다.</p>
+            <div class="tl-depth-bar-wrap">
+              <div class="tl-depth-bar" data-depth="8184"></div>
+              <span class="tl-depth-label">8,184m</span>
+            </div>
+          </div>
+          <div class="tl-dot-wrap"><div class="tl-dot"></div></div>
+          <div class="tl-empty"></div>
+        </div>
+
+        <!-- 1951 — 오른쪽 -->
+        <div class="tl-item tl-right" data-depth="10900">
+          <div class="tl-empty"></div>
+          <div class="tl-dot-wrap"><div class="tl-dot"></div></div>
+          <div class="tl-content">
+            <div class="tl-year">1951</div>
+            <div class="tl-event">HMS 챌린저 II호 — 음향 측심 재측정</div>
+            <p class="tl-desc">영국 국립해양연구소가 음향 측심(echo sounding) 기술로 10,900m를 측정, 해당 지점에 '챌린저 딥(Challenger Deep)'이라는 공식 명칭을 부여하였습니다.</p>
+            <div class="tl-depth-bar-wrap">
+              <div class="tl-depth-bar" data-depth="10900"></div>
+              <span class="tl-depth-label">10,900m</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- 1960 — 왼쪽 -->
+        <div class="tl-item tl-left" data-depth="10916">
+          <div class="tl-content">
+            <div class="tl-year">1960</div>
+            <div class="tl-event">트리에스테호 — 최초 유인 잠항</div>
+            <p class="tl-desc">자크 피카르(Jacques Piccard)와 돈 월시(Don Walsh)가 바티스카프 트리에스테로 10,916m까지 유인 잠항. 잠항 소요 시간 약 4시간 48분. 저면에서 어종을 목격해 극심해 생물 서식을 최초 확인했습니다.</p>
+            <div class="tl-depth-bar-wrap">
+              <div class="tl-depth-bar" data-depth="10916"></div>
+              <span class="tl-depth-label">10,916m</span>
+            </div>
+          </div>
+          <div class="tl-dot-wrap"><div class="tl-dot"></div></div>
+          <div class="tl-empty"></div>
+        </div>
+
+        <!-- 1995 — 오른쪽 -->
+        <div class="tl-item tl-right" data-depth="10911">
+          <div class="tl-empty"></div>
+          <div class="tl-dot-wrap"><div class="tl-dot"></div></div>
+          <div class="tl-content">
+            <div class="tl-year">1995</div>
+            <div class="tl-event">카이코(Kaiko) — ROV 최초 심저면 시료 채취</div>
+            <p class="tl-desc">일본 JAMSTEC의 무인잠수정 카이코(ROV Kaiko)가 10,911m 저면에서 퇴적물 코어 시료를 최초 채취. 이 시료에서 다수의 미기재 미생물 신종이 기재되었습니다.</p>
+            <div class="tl-depth-bar-wrap">
+              <div class="tl-depth-bar" data-depth="10911"></div>
+              <span class="tl-depth-label">10,911m</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- 2012 — 왼쪽 -->
+        <div class="tl-item tl-left" data-depth="10898">
+          <div class="tl-content">
+            <div class="tl-year">2012</div>
+            <div class="tl-event">딥씨 챌린저 — 카메론 단독 잠항</div>
+            <p class="tl-desc">영화감독 제임스 카메론이 수직 어뢰형 잠수정 딥씨 챌린저로 10,898m 단독 잠항 성공. 3D 카메라 시스템과 6종의 과학 계측 장비를 운용, 저면 영상을 최초 취득했습니다.</p>
+            <div class="tl-depth-bar-wrap">
+              <div class="tl-depth-bar" data-depth="10898"></div>
+              <span class="tl-depth-label">10,898m</span>
+            </div>
+          </div>
+          <div class="tl-dot-wrap"><div class="tl-dot"></div></div>
+          <div class="tl-empty"></div>
+        </div>
+
+        <!-- 2019 — 오른쪽 -->
+        <div class="tl-item tl-right tl-highlight" data-depth="10928">
+          <div class="tl-empty"></div>
+          <div class="tl-dot-wrap"><div class="tl-dot tl-dot-gold"></div></div>
+          <div class="tl-content">
+            <div class="tl-year">2019 <span class="tl-record-badge">★ 현행 기록</span></div>
+            <div class="tl-event">파이브 딥스 탐사 — 현행 최심 기록 갱신</div>
+            <p class="tl-desc">탐험가 빅터 베스코보(Victor Vescovo)가 DSV 리미팅 팩터로 10,928m를 기록하며 현행 유인 잠항 최심 기록 수립. 신종 갑각류 4종 채집 및 마이크로플라스틱 오염 최초 확인.</p>
+            <div class="tl-depth-bar-wrap">
+              <div class="tl-depth-bar tl-depth-bar-gold" data-depth="10928"></div>
+              <span class="tl-depth-label">10,928m</span>
+            </div>
+          </div>
+        </div>
+
+      </div><!-- /tl-grid -->
+    </div><!-- /tl-body -->
+  </section>
+
+  <!-- ======================== PRESSURE ======================== -->
+  <div class="section-divider"></div>
+  <section class="pressure-section reveal">
+    <div class="pressure-visual">
+      <svg class="pressure-gauge" viewBox="0 0 400 400" xmlns="http://www.w3.org/2000/svg">
+        <defs>
+          <radialGradient id="gaugeGrad" cx="50%" cy="50%">
+            <stop offset="0%"   stop-color="#00d4ff" stop-opacity="0.1"/>
+            <stop offset="60%"  stop-color="#0055aa" stop-opacity="0.05"/>
+            <stop offset="100%" stop-color="#000a14" stop-opacity="0"/>
+          </radialGradient>
+          <filter id="g3">
+            <feGaussianBlur stdDeviation="5" result="b"/>
+            <feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge>
+          </filter>
+          <linearGradient id="arcGrad" gradientUnits="userSpaceOnUse" x1="200" y1="60" x2="200" y2="340">
+            <stop offset="0%"   stop-color="#7fffd4"/>
+            <stop offset="50%"  stop-color="#00d4ff"/>
+            <stop offset="100%" stop-color="#0033aa"/>
+          </linearGradient>
+        </defs>
+        <circle cx="200" cy="200" r="170" fill="url(#gaugeGrad)" stroke="#00d4ff" stroke-width="1" opacity="0.3"/>
+        <circle cx="200" cy="200" r="155" fill="none" stroke="#00d4ff" stroke-width="0.5" opacity="0.15" stroke-dasharray="8,6"/>
+        <circle cx="200" cy="200" r="130" fill="none" stroke="#00d4ff" stroke-width="0.5" opacity="0.1"/>
+        <g stroke="#00d4ff" stroke-width="1" opacity="0.4">
+          <line x1="200" y1="48"  x2="200" y2="68"/>
+          <line x1="297" y1="76"  x2="285" y2="92"/>
+          <line x1="352" y1="163" x2="332" y2="170"/>
+          <line x1="352" y1="237" x2="332" y2="230"/>
+          <line x1="297" y1="324" x2="285" y2="308"/>
+          <line x1="200" y1="352" x2="200" y2="332"/>
+          <line x1="103" y1="324" x2="115" y2="308"/>
+          <line x1="48"  y1="237" x2="68"  y2="230"/>
+          <line x1="48"  y1="163" x2="68"  y2="170"/>
+          <line x1="103" y1="76"  x2="115" y2="92"/>
+        </g>
+        <circle cx="200" cy="200" r="140" fill="none" stroke="url(#arcGrad)" stroke-width="6"
+          stroke-dasharray="0 879" stroke-linecap="round" opacity="0.9"
+          id="pressureArc" transform="rotate(-90 200 200)"/>
+        <circle cx="200" cy="200" r="80" fill="rgba(0,10,20,0.9)" stroke="#00d4ff" stroke-width="1" opacity="0.6"/>
+        <text x="200" y="186" text-anchor="middle" font-family="Bebas Neue" font-size="32" fill="#00d4ff" filter="url(#g3)">1,086</text>
+        <text x="200" y="208" text-anchor="middle" font-family="Source Code Pro" font-size="10" fill="#336688" letter-spacing="2">기압 (ATM)</text>
+        <text x="200" y="228" text-anchor="middle" font-family="Noto Serif KR" font-size="9" fill="#2d5e7a">챌린저 딥 수압</text>
+        <line x1="200" y1="200" x2="200" y2="72" stroke="#fff" stroke-width="2" stroke-linecap="round" opacity="0.8" id="pressureNeedle" transform="rotate(-180 200 200)"/>
+        <circle cx="200" cy="200" r="8" fill="#00d4ff" filter="url(#g3)"/>
+        <circle cx="200" cy="200" r="4" fill="#fff"/>
+        <text x="200" y="40"  text-anchor="middle" font-family="Source Code Pro" font-size="9"  fill="#00d4ff" opacity="0.6">MAX</text>
+        <text x="50"  y="160" text-anchor="middle" font-family="Source Code Pro" font-size="8" fill="#336688">0</text>
+        <text x="350" y="160" text-anchor="middle" font-family="Source Code Pro" font-size="8" fill="#336688">1100</text>
+      </svg>
+    </div>
+    <div class="pressure-content">
+      <div class="section-tag">수압의 세계 · Hydrostatic Pressure</div>
+      <h2 class="section-title">1,000배의<br/>압력</h2>
+      <p>마리아나 해구 바닥에서는 지표면보다 약 1,086배 높은 수압이 작용합니다. 이 압력은 생명체의 세포 구조, 단백질 기능, 그리고 화학 반응의 기본 원리를 바꿔놓습니다.</p>
+      <p>그럼에도 불구하고 이 극한 환경에서 생명체가 존재한다는 것은 생명의 적응력이 얼마나 놀라운지를 보여줍니다.</p>
+      <ul class="pressure-list">
+        <li>일반 잠수함의 최대 허용 수압은 약 100–200기압으로, 챌린저 딥의 약 10분의 1 수준에 불과합니다.</li>
+        <li>심해 탐사정은 티타늄 또는 고강도 강철로 제작되며, 선체 벽 두께가 수십 센티미터에 달해야 합니다.</li>
+        <li>심해 생물은 세포막의 불포화 지방산 비율을 높여 극한 압력에서도 막 유동성을 유지합니다(피에조적응).</li>
+        <li>해수는 이 깊이에서 약 5% 압축되어, 표면 해수보다 밀도가 높은 특수한 열역학적 상태로 존재합니다.</li>
+      </ul>
+    </div>
+  </section>
+
+  <!-- ======================== FOOTER ======================== -->
+  <div class="section-divider"></div>
+  <footer>
+    <div>
+      <div class="footer-brand">마리아나 해구</div>
+      <p class="footer-desc">지구 최심부 연구 아카이브. 극한 환경 과학의 최전선에서 발견된 사실들을 기록합니다.</p>
+    </div>
+    <div class="footer-section">
+      <h5>탐색하기</h5>
+      <ul>
+        <li>수심층 구조</li>
+        <li>지질학적 형성</li>
+        <li>생물 다양성</li>
+        <li>탐사 연표</li>
+        <li>계측 데이터</li>
+      </ul>
+    </div>
+    <div class="footer-section">
+      <h5>참고 정보</h5>
+      <ul>
+        <li>위치 및 좌표</li>
+        <li>최신 연구</li>
+        <li>환경 오염 현황</li>
+        <li>챌린저 딥</li>
+      </ul>
+    </div>
+  </footer>
+  <div class="footer-bottom">
+    <p>© 2024 마리아나 해구 프로젝트 · 지구의 심연을 기록하다</p>
+    <p>수심 <span class="bioluminescent-text">11,034m</span> · 11°22′N 142°35′E</p>
+  </div>
+
+  <script src="main.js"></script>
+  <script src="compare-viz.js"></script>
+  <script src="vessels.js"></script>
+  <!-- Three.js r128 (terrain) -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+  <script src="terrain3d.js"></script>
+</body>
+</html>
